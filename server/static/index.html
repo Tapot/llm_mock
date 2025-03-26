@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>SSE Example</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f9;
+            color: #333;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        h1 {
+            color: #4a90e2;
+        }
+        label {
+            margin-top: 10px;
+            font-weight: bold;
+        }
+        input[type="text"], input[type="number"] {
+            margin: 5px 0 15px;
+            padding: 8px;
+            width: 300px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        button {
+            background-color: #4a90e2;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-bottom: 20px;
+        }
+        button:hover {
+            background-color: #357ab8;
+        }
+        #output {
+            width: 80%;
+            max-width: 600px;
+            background-color: #fff;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 10px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        p {
+            margin: 5px 0;
+            padding: 5px;
+            background-color: #e9f7fe;
+            border-radius: 3px;
+            white-space: pre-wrap; /* Preserve whitespace for better formatting */
+        }
+    </style>
+</head>
+<body>
+    <h1>FastAPI SSE Streaming Example</h1>
+    <p>For testing input a text and number of requests to make. Then click the button. <br/>
+    For testing batch - enter 5+ value in Number of Simultaneous Requests</p>
+
+    <label for="inputText">Text:</label>
+    <input type="text" id="inputText" placeholder="Enter text here" value="1 2 3 4 5">
+
+    <label for="numRequests">Number of Simultaneous Requests:</label>
+    <input type="number" id="numRequests" min="1" value="5">
+
+    <button onclick="startSSE()">Start SSE Stream</button>
+
+    <div id="output"></div>
+
+    <script>
+        function startSSE() {
+            const text = document.getElementById("inputText").value;
+            const numRequests = parseInt(document.getElementById("numRequests").value, 10);
+            const output = document.getElementById("output");
+            output.innerHTML = ''; // Clear previous output
+
+            for (let i = 0; i < numRequests; i++) {
+                const p = document.createElement("p");
+                p.id = `request-${i}`;
+                p.textContent = `Request ${i + 1}: `;
+                output.appendChild(p);
+
+                const source = new EventSource(`/generate?context=${encodeURIComponent(text)}&requestId=${i}`);
+
+                source.onmessage = function(event) {
+                    const paragraph = document.getElementById(`request-${i}`);
+                    paragraph.textContent += `${event.data} `;
+                };
+
+                source.onerror = function(err) {
+                    console.error(`EventSource failed for request ${i + 1}:`, err);
+                    source.close();
+                };
+            }
+        }
+    </script>
+</body>
+</html>
